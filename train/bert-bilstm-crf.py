@@ -250,6 +250,7 @@ def train():
         # save model
         if f1_epoch > f1:
             torch.save(model.state_dict(), MODEL_PATH)
+            result_df.to_csv(result_path)
             f1 = f1_epoch
     
 def test():
@@ -266,4 +267,4 @@ def test():
 
 if __name__ == '__main__':
     train()
-    test()
+    #test()
