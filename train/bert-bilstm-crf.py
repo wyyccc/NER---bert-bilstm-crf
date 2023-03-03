@@ -14,12 +14,12 @@ from helper.fgm import FGM
 from helper.eval import evaluation_entity
 from seqeval.metrics import f1_score
 
-model_path = '/mnt/disk2/wyc/pretrained-models/bert-base-chinese-ner'
+model_path = '/mnt/disk2/wyc/pretrained-models/ernie'
 hidden_dropout_prob = 0.1
 hidden_size = 768
 
-MODEL_PATH = '/mnt/disk2/wyc/ner/model/bert-bilstm-crf'
-result_path = '/mnt/disk2/wyc/ner/result/bert-bilstm-crf.csv'
+MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v5'
+result_path = '/mnt/disk2/wyc/ner/result/csv/bert-bilstm-crf-v5.csv'
 
 seed = 41
 MAX_LEN = 512
@@ -27,7 +27,7 @@ BATCH_SIZE = 32
 EPOCH = 8
 lr = 4e-5
 min_lr = 4e-6
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 # tag2index
 tag2index = {
@@ -135,7 +135,7 @@ class Bert_BiLSTM_CRF(nn.Module):
         masks = masks.squeeze(1)
         bert_out_all = self.bert(input_ids=texts, attention_mask=masks, token_type_ids=token_type_ids)
         bert_out = bert_out_all[0]
-        bert_out += bert_out_all[2][11] + bert_out_all[2][10] + bert_out_all[2][9]
+        bert_out += bert_out_all[2][11]
         bert_out = bert_out.permute(1, 0, 2)
         device = bert_out.device
         self.hidden = (torch.randn(2, bert_out.size(0), 128).to(device),
@@ -244,7 +244,7 @@ def train():
         # eval
         result_df = predict(test_dataloader, model)
         result = list(result_df['result'])
-        for i in tqdm(range(len(result))):
+        for i in range(len(result)):
             result[i] = result[i].split(' ')
         f1_epoch = evaluation_entity(result, label)
         # save model
