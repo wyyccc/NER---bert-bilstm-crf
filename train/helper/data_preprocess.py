@@ -41,8 +41,15 @@ def seq_cut(data, is_train = True):
                     for j in range(499,0,-1):
                         if temp_x[j]=='。':
                             break
-                    x_list.append(temp_x[:j+1])
-                    y_list.append(temp_y[:j+1])
+                    if j == 1:
+                        for j in range(499,0,-1):
+                            if temp_x[j] in ['，', '；', ',', ';', '、']:
+                                break
+                    if j == 1:
+                        print('seq cut error occur')
+                    else:
+                        x_list.append(temp_x[:j+1])
+                        y_list.append(temp_y[:j+1])
                     temp_x = temp_x[j+1:]
                     temp_y = temp_y[j+1:]
                 x_list.append(temp_x)
@@ -58,7 +65,14 @@ def seq_cut(data, is_train = True):
                     for j in range(499,0,-1):
                         if temp_x[j]=='。':
                             break
-                    x_list.append(temp_x[:j+1])
+                    if j == 1:
+                        for j in range(499,0,-1):
+                            if temp_x[j] in ['，', '；', ',', ';', '、']:
+                                break
+                    if j == 1:
+                        print('seq cut error occur')
+                    else:
+                        x_list.append(temp_x[:j+1])
                     temp_x = temp_x[j+1:]
                 x_list.append(temp_x)
         return x_list
