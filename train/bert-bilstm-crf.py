@@ -15,31 +15,36 @@ from helper.eval import evaluation_entity
 from seqeval.metrics import f1_score
 
 model_path = '/mnt/disk2/wyc/pretrained-models/ernie'
-hidden_dropout_prob = 0.1
-hidden_size = 768
+MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v7'
+result_path = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v7.csv'
 
-MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v5'
-result_path = '/mnt/disk2/wyc/ner/result/csv/bert-bilstm-crf-v5.csv'
+label_type = 'BIO'
 
 seed = 41
 MAX_LEN = 512
 BATCH_SIZE = 32
-EPOCH = 8
-lr = 4e-5
-min_lr = 4e-6
-DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
+EPOCH = 16
+lr = 1e-5
+min_lr = 1e-6
+warm_up_lr = 1e-6
+non_Bert_lr = 1e-3
+hidden_dropout_prob = 0.1
+hidden_size = 768
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+
 
 # tag2index
 tag2index = {
     "O": 0,
-    "B-6": 1, "I-6": 2,
-    "B-7": 3, "I-7": 4,
-    "B-8": 5, "I-8": 6,
-    "B-9": 7, "I-9": 8,
-    "B-11": 9, "I-11": 10,
-    "B-12": 11, "I-12": 12,
-    "B-13": 13, "I-13": 14,
-    "B-14": 15, "I-14": 16,
+    "B-6": 1, "I-6": 2, "E-6":3,
+    "B-7": 4, "I-7": 5, "E-7":6,
+    "B-8": 7, "I-8": 8, "E-8":9,
+    "B-9": 10, "I-9": 11, "E-9":12,
+    "B-11": 13, "I-11": 14, "E-11":15,
+    "B-12": 16, "I-12": 17, "E-12":18,
+    "B-13": 19, "I-13": 20, "E-13":21,
+    "B-14": 22, "I-14": 23, "E-14":24,
 }
 index2tag = {v: k for k, v in tag2index.items()}
 
@@ -147,7 +152,7 @@ class Bert_BiLSTM_CRF(nn.Module):
         # 计算损失值和预测值
         if tags is not None:
             predictions = self.crf.decode(lstm_feats, mask=masks)
-            loss = -self.crf(lstm_feats, tags, masks)
+            loss = -self.crf(lstm_feats, tags, mask=masks)
             return loss, predictions
         else:
             predictions = self.crf.decode(lstm_feats, mask=masks)
@@ -202,7 +207,6 @@ def predict(test_dataloader, model):
             token_texts['attention_mask'] = batch_data['token_texts']['attention_mask'].to(DEVICE)
             predictions = model(token_texts, None)
             predictions_list.extend(predictions)
-    print(len(predictions_list))
     entity_tag_list = []
     index2tag = {v: k for k, v in tag2index.items()}  # 反转字典
     for i in range(len(predictions_list)):
@@ -217,14 +221,14 @@ def predict(test_dataloader, model):
     return result_df
 
 def train():
-    train_dataset = data_train()
+    train_dataset = data_train(label_type)
     token_texts, tags = data_preprocessing(train_dataset, is_train=True)
     train_dataset = NerDataset(token_texts, tags)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     model = Bert_BiLSTM_CRF(tag2index=tag2index).to(DEVICE)
     print(f"GPU_NAME:{torch.cuda.get_device_name()} | Memory_Allocated:{torch.cuda.memory_allocated()}")
     # eval dataset
-    test_data, label = data_test()
+    test_data, label = data_test(label_type)
     test_token_texts, _ = data_preprocessing(test_data, is_train=False)
     test_dataset = NerDatasetTest(test_token_texts)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
@@ -233,11 +237,12 @@ def train():
     for i in range(EPOCH):
         model.train()
         start = time.time()
-        if i < EPOCH/2:
-            lr_temp = min_lr + (lr-min_lr)*i/EPOCH*2
+        if i == 0:
+            lr_temp = warm_up_lr
         else:
-            lr_temp = min_lr + (lr-min_lr)*(EPOCH-i)/EPOCH*2
-        optimizer = optim.AdamW(model.parameters(), lr = lr_temp)
+            lr_temp = lr - (i-1)/(EPOCH-1) * (lr - min_lr)
+        optimizer_grouped_parameters = [{'params': [p for n, p in model.named_parameters() if 'bert' in n]}, {'params': [p for n, p in model.named_parameters() if 'bert' not in n], 'lr': non_Bert_lr}]
+        optimizer = optim.AdamW(optimizer_grouped_parameters, lr = lr_temp)
         print('lr:', lr_temp)
         optimizer = Lookahead(optimizer, k=5, alpha=0.5)
         train_epoch(train_dataloader, model, optimizer, i, start)
@@ -246,7 +251,7 @@ def train():
         result = list(result_df['result'])
         for i in range(len(result)):
             result[i] = result[i].split(' ')
-        f1_epoch = evaluation_entity(result, label)
+        f1_epoch = evaluation_entity(result, label, label_type)
         # save model
         if f1_epoch > f1:
             torch.save(model.state_dict(), MODEL_PATH)
@@ -254,7 +259,7 @@ def train():
             f1 = f1_epoch
     
 def test():
-    test_dataset, _ = data_test()
+    test_dataset, _ = data_test(label_type)
     token_texts, _ = data_preprocessing(test_dataset, is_train=False)
     test_dataset = NerDatasetTest(token_texts)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
