@@ -1,7 +1,7 @@
 # NER
 for ner task
 
-model: Bert-bilstm-crf
+model: bert-bilstm-crf
 
 env: pip install torchcrf==0.4.0
     
