@@ -19,5 +19,4 @@ env: pip install torchcrf==0.4.0
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|
 | v5 | ernie3.0 + BERT 2-layer | linear lr & Lookahead & FGM | 16 epoch | 0.8504 |
 | v6 | ernie3.0 + BERT 2-layer | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 |
-| v7 | chinese-bert-wwm-ext + BERT 2-layer | linear lr & Lookahead & FGM | 16 epoch |  |
-| v8 | chinese-bert-wwm-ext + BERT 2-layer | hierarchical and linear lr & Lookahead & FGM | 16 epoch |  |
+| v7 | ernie3.0 + BERT 2-layer | hierarchical and linear lr & Lookahead & FGM | 16 epoch |  |
