@@ -35,7 +35,7 @@ def evaluation(pred, true):
     print('f1:', metrics.f1_score(true, pred, average="micro"))
     return 0
 
-def evaluation_entity(pred, true):
+def evaluation_entity(pred, true, type = 'BIO'):
     TP = 0
     FP = 0
     FN = 0
@@ -50,15 +50,28 @@ def evaluation_entity(pred, true):
                 gt += 1
         for j in range(len(temp_pred)):
             if temp_pred[j][0] == 'B':
+                if temp_true[j] != temp_pred[j]:
+                    fp += 1
+                    continue
                 temp = True
-                for k in range(j, len(temp_pred)):
-                    if temp_pred[k] == 'O':
-                        if temp_true[k] != 'O':
+                if type == 'BIO':
+                    for k in range(j, len(temp_pred)):
+                        if temp_pred[k][0] != 'I':
+                            if temp_true[k][0] == 'I':
+                                temp = False
+                            break
+                        if temp_pred[k] != temp_true[k]:
                             temp = False
-                        break
-                    if temp_pred[k] != temp_true[k]:
-                        temp = False
-                        break
+                            break
+                elif type == 'BIOE':
+                    for k in range(j, len(temp_pred)):
+                        if temp_pred[k][0] == 'E':
+                            if temp_true[k] != temp_pred[k]:
+                                temp = False
+                            break
+                        if temp_pred[k] != temp_true[k]:
+                            temp = False
+                            break
                 if temp:
                     tp += 1
                 else:
@@ -67,8 +80,14 @@ def evaluation_entity(pred, true):
         TP += tp
         FP += fp
         FN += fn
-    precision = TP/(TP+FP)
-    recall = TP/(TP+FN)
+    if TP+FP == 0:
+        precision = 0
+    else:
+        precision = TP/(TP+FP)
+    if TP+FN == 0:
+        recall = 0
+    else:
+        recall = TP/(TP+FN)
     if precision == 0 and recall == 0:
         f1 = 0
     else:
