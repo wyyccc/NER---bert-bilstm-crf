@@ -4,7 +4,11 @@ for ner task
 model: bert-bilstm-crf
 
 env: pip install torchcrf==0.4.0
-    
+
+********baseline********
+
+max_len of sentence: 500
+
 | version | model | train | other | f1 |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|
 | v1 | bert-base-chinese | plain | baseline | 0.7848 |
