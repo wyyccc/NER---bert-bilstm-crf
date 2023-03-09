@@ -7,7 +7,8 @@ env: pip install torchcrf==0.4.0
 
 ********baseline********
 
-max_len of sentence: 500
+max_len of sentence = 500
+lstm_hidden_size = 128
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
@@ -32,5 +33,6 @@ idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beg
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8501 |
-| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8496 |
+| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8501 | baseline for this stage |
+| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8504 | prompt improves f1 slightly |
+| v10 | ernie3.0 + BERT 2-layer (addition) + LSTM hidden 256 | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8504 | prompt improves f1 slightly |
