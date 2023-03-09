@@ -32,5 +32,5 @@ idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beg
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8506 |
-| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8234 |
+| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8501 |
+| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8496 |
