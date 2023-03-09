@@ -18,6 +18,8 @@ max_len of sentence: 500
 
 ********data processing improved & evaluation debuged********
 
+evaluation function had bugs, there was an error in judging continuous entities. It was solve in v5.
+
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v5 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
