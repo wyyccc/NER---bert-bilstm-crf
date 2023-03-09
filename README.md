@@ -14,8 +14,8 @@ lstm_hidden_size = 128
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v1 | bert-base-chinese | plain | baseline | 0.7848 | baseline |
 | v2 | bert-base-chinese | linear lr & Lookahead & FGM | 8 epoch | 0.7984 | linear lr & Lookahead & FGM improves f1 |
-| v3 | bert-base-chinese + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 8 epoch | 0.8016 | BERT 2-layer (addition) improves f1 |
-| v4 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 8 epoch | 0.8074 | ernie3.0 is better |
+| v3 | bert-base-chinese + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8016 | BERT 2-layer (addition) improves f1 |
+| v4 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8074 | ernie3.0 is better |
 
 ********data processing improved & evaluation debuged********
 
@@ -23,9 +23,9 @@ evaluation function had bugs, there was an error in judging continuous entities.
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v5 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
-| v6 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 | BIOE doesn't work |
-| v7 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8506 | hierarchical and linear lr accelerates convergence |
+| v5 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
+| v6 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 | BIOE doesn't work |
+| v7 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8506 | hierarchical and linear lr accelerates convergence |
 
 ********max_len of sentence changed to 450********
 
@@ -33,7 +33,8 @@ idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beg
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8501 | baseline for this stage |
-| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | prompt improves f1 slightly |
-| v10 | ernie3.0 + BERT 4-layer (addition) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | more layers not helps |
+| v8 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8501 | baseline for this stage |
+| v9 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | prompt improves f1 slightly (baseline for this stage) |
+| v10 | ernie3.0 + BERT 4-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | more layers not helps |
 | v11 | ernie3.0 + BERT 2-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8504 |  |
+| v12 | ernie3.0 + BERT 2-layer (add) + self-attention | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8504 |  |
