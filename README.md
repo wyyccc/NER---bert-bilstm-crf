@@ -47,5 +47,5 @@ For this stage, optimization mainly focues on modeling.
 | v9 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | prompt improves f1 slightly (baseline for this stage) |
 | v10 | ernie3.0 + BERT 4-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | add more layers not helps |
 | v11 | ernie3.0 + BERT 2-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8527 | concat is better than add |
-| v12 | ernie3.0 + BERT 2-layer (concat) + self-attention | linear lr & Lookahead & FGM | 8 epoch & Prompt |  |  |
+| v12 | ernie3.0 + BERT 4-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt |  |  |
 | v13 | ernie3.0 + BERT 2-layer (concat) + self-attention | linear lr & Lookahead & FGM | 12 epoch & Prompt |  |  |
