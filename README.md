@@ -5,7 +5,7 @@ model: bert-bilstm-crf
 
 env: pip install torchcrf==0.4.0
 
-********baseline********
+## stage 1
 
 max_len of sentence = 500
 lstm_hidden_size = 128
@@ -17,6 +17,8 @@ lstm_hidden_size = 128
 | v3 | bert-base-chinese + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8016 | BERT 2-layer (addition) improves f1 |
 | v4 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8074 | ernie3.0 is better |
 
+## stage 2
+
 ********data processing improved & evaluation debuged********
 
 evaluation function had bugs, there was an error in judging continuous entities. It was solved in v5.
@@ -26,6 +28,8 @@ evaluation function had bugs, there was an error in judging continuous entities.
 | v5 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
 | v6 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 | BIOE doesn't work |
 | v7 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8506 | hierarchical and linear lr accelerates convergence |
+
+## stage 3
 
 ********max_len of sentence changed to 450********
 
