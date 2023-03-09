@@ -11,28 +11,46 @@ from transformers import AutoModel, BertTokenizer
 from torchcrf import CRF
 from helper.lookahead import Lookahead
 from helper.fgm import FGM
+from helper.self_attention import SelfAttention
 from helper.eval import evaluation_entity
 from seqeval.metrics import f1_score
 
 model_path = '/mnt/disk2/wyc/pretrained-models/ernie'
-MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v7'
-result_path = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v7.csv'
+MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v12'
+RESULT_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v12.csv'
 
 label_type = 'BIO'
 
 seed = 41
 MAX_LEN = 512
-BATCH_SIZE = 32
-EPOCH = 16
-lr = 1e-5
-min_lr = 1e-6
-warm_up_lr = 1e-6
-non_Bert_lr = 1e-3
+BATCH_SIZE = 40
+EPOCH = 8 # EPOCH > 2
+print_steps = 50
+
+lr = 2e-5
+min_lr = 2e-6
+warm_up_lr = 2e-7
+non_bert_lr = 2e-3
+min_non_bert_lr = 2e-4
+warm_up_non_bert_lr = 2e-5
 hidden_dropout_prob = 0.1
 hidden_size = 768
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+hidden_size_lstm = 128
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 
+# attention
+hidden_size_attention = 48
+num_attention_heads = 6
+hidden_dropout_prob = 0.1
 
+# optimization
+bert_type = 'add' # add or concat
+bert_layers = 2 # last n layers
+is_hierarchical_linear_lr = True
+is_fgm = True
+is_lookahead = True
+is_prompt = True
+is_attention = True
 
 # tag2index
 tag2index = {
@@ -45,6 +63,7 @@ tag2index = {
     "B-12": 16, "I-12": 17, "E-12":18,
     "B-13": 19, "I-13": 20, "E-13":21,
     "B-14": 22, "I-14": 23, "E-14":24,
+    "P": 25
 }
 index2tag = {v: k for k, v in tag2index.items()}
 
@@ -127,11 +146,14 @@ class Bert_BiLSTM_CRF(nn.Module):
         super(Bert_BiLSTM_CRF, self).__init__()
         self.tagset_size = len(tag2index)
         self.bert = AutoModel.from_pretrained(model_path, output_hidden_states = True)
-        self.lstm = nn.LSTM(input_size=768, hidden_size=128, num_layers=1, batch_first=True, bidirectional=True)
-        self.dropout = nn.Dropout(p=0.1)
-        self.dense = nn.Linear(in_features=256, out_features=self.tagset_size)
-        self.crf = CRF(num_tags=self.tagset_size, batch_first=True)
+        self.bert_dense = nn.Linear(in_features=hidden_size*bert_layers, out_features=hidden_size)
+        self.lstm = nn.LSTM(input_size=hidden_size, hidden_size=hidden_size_lstm, num_layers=1, batch_first=True, bidirectional=True)
         self.hidden = None
+        self.dropout = nn.Dropout(p=0.1)
+        self.lstm_dense = nn.Linear(in_features=hidden_size_lstm*2, out_features=self.tagset_size)
+        self.self_attention = SelfAttention(num_attention_heads, hidden_size_lstm*2, hidden_size_attention, hidden_dropout_prob)
+        self.self_attention_dense = nn.Linear(in_features=hidden_size_attention, out_features=self.tagset_size)
+        self.crf = CRF(num_tags=self.tagset_size, batch_first=True)
     
     def forward(self, token_texts, tags):
         texts, token_type_ids, masks = token_texts.values()
@@ -140,22 +162,33 @@ class Bert_BiLSTM_CRF(nn.Module):
         masks = masks.squeeze(1)
         bert_out_all = self.bert(input_ids=texts, attention_mask=masks, token_type_ids=token_type_ids)
         bert_out = bert_out_all[0]
-        bert_out += bert_out_all[2][11]
+        if bert_type == 'add':
+            for i in range(bert_layers-1):
+                bert_out += bert_out_all[2][11-i]
+        if bert_type == 'concat':
+            for i in range(bert_layers-1):
+                bert_out = torch.cat([bert_out, bert_out_all[2][11-i]], 2)
+            bert_out = self.bert_dense(bert_out)
         bert_out = bert_out.permute(1, 0, 2)
         device = bert_out.device
-        self.hidden = (torch.randn(2, bert_out.size(0), 128).to(device),
-                       torch.randn(2, bert_out.size(0), 128).to(device))
+        self.hidden = (torch.randn(2, bert_out.size(0), hidden_size_lstm).to(device),
+                       torch.randn(2, bert_out.size(0), hidden_size_lstm).to(device))
         out, self.hidden = self.lstm(bert_out, self.hidden)
-        lstm_feats = self.dense(out)
-        lstm_feats = lstm_feats.permute(1, 0, 2)
+        # Self-attention
+        if is_attention:
+            feats = self.self_attention(out)
+            feats = self.self_attention_dense(feats)
+        else:
+            feats = self.lstm_dense(out)
+        feats = feats.permute(1, 0, 2)
         masks = masks.clone().detach().bool()
         # 计算损失值和预测值
         if tags is not None:
-            predictions = self.crf.decode(lstm_feats, mask=masks)
-            loss = -self.crf(lstm_feats, tags, mask=masks)
+            predictions = self.crf.decode(feats, mask=masks)
+            loss = -self.crf(feats, tags, mask=masks)
             return loss, predictions
         else:
-            predictions = self.crf.decode(lstm_feats, mask=masks)
+            predictions = self.crf.decode(feats, mask=masks)
             return predictions
 
 def get_f1_score(tags, predictions):
@@ -174,7 +207,8 @@ def get_f1_score(tags, predictions):
     return f1
 
 def train_epoch(train_dataloader, model, optimizer, epoch, start):
-    fgm = FGM(model)
+    if is_fgm:
+        fgm = FGM(model)
     for i, batch_data in enumerate(train_dataloader):
         token_texts = dict()
         token_texts['input_ids'] = batch_data['token_texts']['input_ids'].to(DEVICE)
@@ -190,7 +224,7 @@ def train_epoch(train_dataloader, model, optimizer, epoch, start):
         loss_adv.backward(torch.ones_like(loss_adv))
         fgm.restore() 
         optimizer.step()
-        if i % 50 == 0:
+        if i % print_steps == 0:
             micro_f1 = get_f1_score(tags, predictions)
             now = time.time()
             s = round(now - start, 1)
@@ -221,14 +255,14 @@ def predict(test_dataloader, model):
     return result_df
 
 def train():
-    train_dataset = data_train(label_type)
+    train_dataset = data_train(type = label_type, prompt = is_prompt)
     token_texts, tags = data_preprocessing(train_dataset, is_train=True)
     train_dataset = NerDataset(token_texts, tags)
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
     model = Bert_BiLSTM_CRF(tag2index=tag2index).to(DEVICE)
     print(f"GPU_NAME:{torch.cuda.get_device_name()} | Memory_Allocated:{torch.cuda.memory_allocated()}")
     # eval dataset
-    test_data, label = data_test(label_type)
+    test_data, label = data_test(type = label_type, prompt = is_prompt)
     test_token_texts, _ = data_preprocessing(test_data, is_train=False)
     test_dataset = NerDatasetTest(test_token_texts)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
@@ -239,12 +273,18 @@ def train():
         start = time.time()
         if i == 0:
             lr_temp = warm_up_lr
+            lr_non_bert_temp = warm_up_non_bert_lr
         else:
-            lr_temp = lr - (i-1)/(EPOCH-1) * (lr - min_lr)
-        optimizer_grouped_parameters = [{'params': [p for n, p in model.named_parameters() if 'bert' in n]}, {'params': [p for n, p in model.named_parameters() if 'bert' not in n], 'lr': non_Bert_lr}]
+            lr_temp = lr - (i-1)/(EPOCH-2) * (lr - min_lr)
+            lr_non_bert_temp = non_bert_lr - (i-1)/(EPOCH-2) * (non_bert_lr - min_non_bert_lr)
+        optimizer_grouped_parameters = [{'params': [p for n, p in model.named_parameters() if 'bert' in n]}, {'params': [p for n, p in model.named_parameters() if 'bert' not in n], 'lr': lr_non_bert_temp}]
         optimizer = optim.AdamW(optimizer_grouped_parameters, lr = lr_temp)
-        print('lr:', lr_temp)
-        optimizer = Lookahead(optimizer, k=5, alpha=0.5)
+        if not is_hierarchical_linear_lr:
+            optimizer = optim.AdamW(model.named_parameters(), lr = lr)
+        print('bert_lr:', lr_temp, '    non_bert_lr: ', lr_non_bert_temp)
+        # Lookahead
+        if is_lookahead:
+            optimizer = Lookahead(optimizer, k=5, alpha=0.5)
         train_epoch(train_dataloader, model, optimizer, i, start)
         # eval
         result_df = predict(test_dataloader, model)
@@ -255,11 +295,11 @@ def train():
         # save model
         if f1_epoch > f1:
             torch.save(model.state_dict(), MODEL_PATH)
-            result_df.to_csv(result_path)
+            result_df.to_csv(RESULT_PATH)
             f1 = f1_epoch
     
 def test():
-    test_dataset, _ = data_test(label_type)
+    test_dataset, _ = data_test(type = label_type, prompt = is_prompt)
     token_texts, _ = data_preprocessing(test_dataset, is_train=False)
     test_dataset = NerDatasetTest(token_texts)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
@@ -267,7 +307,7 @@ def test():
     model.load_state_dict(torch.load(MODEL_PATH))
     # 模型预测
     result_df = predict(test_dataloader, model)
-    result_df.to_csv(result_path)
+    result_df.to_csv(RESULT_PATH)
 
 
 if __name__ == '__main__':
