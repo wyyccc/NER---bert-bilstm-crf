@@ -10,6 +10,8 @@ env: pip install torchcrf==0.4.0
 max_len of sentence = 500
 lstm_hidden_size = 128
 
+For this stage, optimization mainly focuses on training and modeling.
+
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v1 | bert-base-chinese | plain | baseline | 0.7848 | baseline |
@@ -23,6 +25,8 @@ lstm_hidden_size = 128
 
 evaluation function had bugs, there was an error in judging continuous entities. It was solved in v5.
 
+For this stage, optimization mainly focuses on data input and training.
+
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v5 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
@@ -34,6 +38,8 @@ evaluation function had bugs, there was an error in judging continuous entities.
 ********max_len of sentence changed to 450********
 
 idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beginning of sentences, label set: "P".
+
+For this stage, optimization mainly focues on modeling.
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
