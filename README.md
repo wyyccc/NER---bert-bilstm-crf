@@ -37,8 +37,9 @@ idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beg
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v8 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8501 | baseline for this stage |
+| v8 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8500 | baseline for this stage |
 | v9 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | prompt improves f1 slightly (baseline for this stage) |
-| v10 | ernie3.0 + BERT 4-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | more layers not helps |
+| v10 | ernie3.0 + BERT 4-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | add more layers not helps |
 | v11 | ernie3.0 + BERT 2-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8527 | concat is better than add |
-| v12 | ernie3.0 + BERT 2-layer (add) + self-attention | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8504 |  |
+| v12 | ernie3.0 + BERT 2-layer (concat) + self-attention | linear lr & Lookahead & FGM | 8 epoch & Prompt |  |  |
+| v13 | ernie3.0 + BERT 2-layer (concat) + self-attention | linear lr & Lookahead & FGM | 12 epoch & Prompt |  |  |
