@@ -14,9 +14,17 @@ env: pip install torchcrf==0.4.0
 
 ********data processing improved & evaluation debuged********
 
-
 | version | model | train | other | f1 |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|
 | v5 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 |
 | v6 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 |
-| v7 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch |  |
+| v7 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8506 |
+
+********max_len of sentence changed to 450********
+
+idea(prompt): Splice types: (type1 [SEP] type2 [SEP] ... typen [SEP]) to the beginning of sentences, label set: "P".
+
+| version | model | train | other | f1 |
+|:--------:|:-----------:|:-----------:|:-----------:|:-----------:|
+| v8 | ernie3.0 + BERT 2-layer (addition) | hierarchical and linear lr & Lookahead & FGM | 16 epoch | 0.8506 |
+| v9 | ernie3.0 + BERT 2-layer (addition) | linear lr & Lookahead & FGM | 16 epoch & Prompt | 0.8234 |
