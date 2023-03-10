@@ -15,9 +15,9 @@ For this stage, optimization mainly focuses on training and modeling.
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v1 | bert-base-chinese | plain | baseline | 0.7848 | baseline |
-| v2 | bert-base-chinese | linear lr & Lookahead & FGM | 8 epoch | 0.7984 | linear lr & Lookahead & FGM improves f1 |
-| v3 | bert-base-chinese + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8016 | BERT 2-layer (addition) improves f1 |
-| v4 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8074 | ernie3.0 is better |
+| v2 | bert-base-chinese | linear lr & Lookahead & FGM | 8 epoch | 0.7984 | **linear lr & Lookahead & FGM improves f1** |
+| v3 | bert-base-chinese + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8016 | **BERT 2-layer (addition) improves f1** |
+| v4 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch | 0.8074 | **ernie3.0 is better** |
 
 ## stage 2
 
@@ -31,7 +31,7 @@ For this stage, optimization mainly focuses on data input and training.
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v5 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch | 0.8504 | baseline for this stage |
 | v6 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 16 epoch & BIOE | 0.8234 | BIOE doesn't work |
-| v7 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8506 | hierarchical and linear lr accelerates convergence |
+| v7 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8506 | **hierarchical and linear lr accelerates convergence** |
 
 ## stage 3
 
@@ -44,9 +44,9 @@ For this stage, optimization mainly focues on modeling.
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
 | v8 | ernie3.0 + BERT 2-layer (add) | hierarchical and linear lr & Lookahead & FGM | 8 epoch | 0.8500 | baseline for this stage |
-| v9 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | prompt improves f1 slightly (baseline for this stage) |
+| v9 | ernie3.0 + BERT 2-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8508 | **prompt improves f1 slightly** (baseline for this stage) |
 | v10 | ernie3.0 + BERT 4-layer (add) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8484 | add more layers not helps |
-| v11 | ernie3.0 + BERT 2-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8527 | concat is better than add |
+| v11 | ernie3.0 + BERT 2-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8527 | **concat is better than add** |
 | v12 | ernie3.0 + BERT 4-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8525 | more layers need more epoch |
 | v13 | ernie3.0 + BERT 4-layer (concat) | linear lr & Lookahead & FGM | 12 epoch & Prompt | 0.8530 | more layers may not help |
 | v14 | ernie3.0 + BERT 4-layer (concat) + self-attention | linear lr & Lookahead & FGM | 12 epoch & Prompt | 0.8497 | additional self-attention doesn't help |
