@@ -58,7 +58,7 @@ For this stage, backbone changes to chinese-roberta-wwm-ext-large.
 
 | version | model | train | other | f1 | comment |
 |:--------:|:-----------:|:-----------:|:-----------:|:-----------:|:-------:|
-| v16 | roberta-large + BERT 2-layer (concat) | hierarchical and linear lr & Lookahead & FGM | 8 epoch |  | baseline for this stage |
+| v16 | roberta-large + BERT 2-layer (concat) | hierarchical and linear lr & Lookahead & FGM | 8 epoch & Prompt |  | baseline for this stage |
 
 
 
