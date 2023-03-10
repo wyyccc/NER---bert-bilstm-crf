@@ -50,4 +50,4 @@ For this stage, optimization mainly focues on modeling.
 | v12 | ernie3.0 + BERT 4-layer (concat) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8525 | more layers need more epoch |
 | v13 | ernie3.0 + BERT 4-layer (concat) | linear lr & Lookahead & FGM | 12 epoch & Prompt | 0.8530 | more layers may not help |
 | v14 | ernie3.0 + BERT 4-layer (concat) + self-attention | linear lr & Lookahead & FGM | 12 epoch & Prompt | 0.8497 | additional self-attention doesn't help |
-| v15 | ernie3.0 + BERT 2-layer (concat) + lstm(64) | linear lr & Lookahead & FGM | 8 epoch & Prompt |  |  |
+| v15 | ernie3.0 + BERT 2-layer (concat) + lstm(64/256) | linear lr & Lookahead & FGM | 8 epoch & Prompt | 0.8503/0.8508 | different lstm hidden_size doesn't help |
