@@ -6,18 +6,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
 tag2index = {
-    "O": "O",
-    "B-6": "人名", "I-6": "人名",
-    "B-7": "地名", "I-7": "地名",
-    "B-8": "时间", "I-8": "时间",
-    "B-9": "会议", "I-9": "会议",
-    "B-11": "核心观点", "I-11": "核心观点",
-    "B-12": "组织机构", "I-12": "组织机构",
-    "B-13": "政策词汇", "I-13": "政策词汇",
-    "B-14": "政策倾向", "I-14": "政策倾向",
-}
-
-tag2index = {
     "O": 0,
     "B-6": 1, "I-6": 2, "E-6":3,
     "B-7": 4, "I-7": 5, "E-7":6,
@@ -29,13 +17,25 @@ tag2index = {
     "B-14": 22, "I-14": 23, "E-14":24,
 }
 
+tag2index_entity = {
+    "O": "O",
+    "B-6": "人名", "I-6": "人名",
+    "B-7": "地名", "I-7": "地名",
+    "B-8": "时间", "I-8": "时间",
+    "B-9": "会议", "I-9": "会议",
+    "B-11": "核心观点", "I-11": "核心观点",
+    "B-12": "组织机构", "I-12": "组织机构",
+    "B-13": "政策词汇", "I-13": "政策词汇",
+    "B-14": "政策倾向", "I-14": "政策倾向",
+}
+
 def read_data(csv_path):
     result = list(pd.read_csv(csv_path)['result'])
     for i in tqdm(range(len(result))):
         result[i] = result[i].split(' ')
     return result
 
-def evaluation(pred, true):
+def evaluation_token(pred, true):
     pred = sum(pred, [])
     true = sum(true, [])
     for i in tqdm(range(len(pred))):
@@ -70,7 +70,7 @@ def evaluation_entity(pred, true, type = 'BIO'):
                 if type == 'BIO':
                     for k in range(j, len(temp_pred)):
                         if temp_pred[k][0] != 'I':
-                            if temp_true[k][0] == 'I':
+                            if temp_true[k] != temp_pred[k]:
                                 temp = False
                             break
                         if temp_pred[k] != temp_true[k]:
@@ -110,11 +110,61 @@ def evaluation_entity(pred, true, type = 'BIO'):
     print('f1:', f1)
     return f1
 
+def evaluation_entity_bytype(pred, true, type = 'BIO'):
+    # gt, tp, fp
+    metric = {'人名':[0,0,0], '地名':[0,0,0], '时间':[0,0,0], '会议':[0,0,0], '核心观点':[0,0,0], '组织机构':[0,0,0], '政策词汇':[0,0,0], '政策倾向':[0,0,0]}
+    for i in range(len(pred)):
+        temp_pred = pred[i]
+        temp_true = true[i]
+        for j in range(len(temp_true)):
+            if temp_true[j][0] == 'B':
+                metric[tag2index_entity[temp_true[j]]][0] += 1
+        for j in range(len(temp_pred)):
+            if temp_pred[j][0] == 'B':
+                if temp_true[j] != temp_pred[j]:
+                    metric[tag2index_entity[temp_pred[j]]][2] += 1
+                    continue
+                temp = True
+                if type == 'BIO':
+                    for k in range(j, len(temp_pred)):
+                        if temp_pred[k][0] != 'I':
+                            if temp_true[k][0] == 'I':
+                                temp = False
+                            break
+                        if temp_pred[k] != temp_true[k]:
+                            temp = False
+                            break
+                if temp:
+                    metric[tag2index_entity[temp_pred[j]]][1] += 1
+                else:
+                    metric[tag2index_entity[temp_pred[j]]][2] += 1
+    for key in metric.keys():
+        TP = metric[key][1]
+        FP = metric[key][2]
+        GT = metric[key][0]
+        FN = GT - TP
+        if TP+FP == 0:
+            precision = 0
+        else:
+            precision = TP/(TP+FP)
+        if TP+FN == 0:
+            recall = 0
+        else:
+            recall = TP/(TP+FN)
+        if precision == 0 and recall == 0:
+            f1 = 0
+        else:
+            f1 = 2*precision*recall/(precision+recall)
+        print(key, 'precision: %f, recall: %f, f1: %f, nums: %d'%(precision, recall, f1, GT))
+    
 
 if __name__ == '__main__':
-    type = 'BIOE'
-    csv_path = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v6.csv'
+    type = 'BIO'
+    prompt = True
+    csv_path = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v11.csv'
     pred = read_data(csv_path)
-    data, true = data_eval(type = type)
-    # evaluation(pred, true)
-    evaluation_entity(pred, true, type = type)
+    data, true = data_eval(prompt = prompt, type = type)
+    # evaluation_token(pred, true)
+    evaluation_entity(pred, true, type = type) # for v5 or ferther (seq_cut max_len=500 for v5-v7)
+    evaluation_entity_bytype(pred, true, type = type) # for v8 or further
+    
