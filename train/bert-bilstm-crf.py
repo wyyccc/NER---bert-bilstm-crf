@@ -16,10 +16,10 @@ from helper.eval import evaluation_entity
 from seqeval.metrics import f1_score
 
 model_path = '/mnt/disk2/wyc/pretrained-models/ernie'
-MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v12'
-RESULT_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v12.csv'
+MODEL_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/model/bert-bilstm-crf-v16'
+RESULT_PATH = '/mnt/disk2/wyc/ner/bert-bilstm-crf/result/csv/bert-bilstm-crf-v16.csv'
 
-label_type = 'BIO'
+label_type = 'BIO' # BIO or BIOE
 
 seed = 41
 MAX_LEN = 512
@@ -34,23 +34,22 @@ non_bert_lr = 2e-3
 min_non_bert_lr = 2e-4
 warm_up_non_bert_lr = 2e-5
 hidden_dropout_prob = 0.1
-hidden_size = 768
+hidden_size = 768 # depends on bert model
 hidden_size_lstm = 128
-DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # attention
 hidden_size_attention = 48
 num_attention_heads = 6
-hidden_dropout_prob = 0.1
 
 # optimization
-bert_type = 'add' # add or concat
+bert_type = 'concat' # add or concat
 bert_layers = 2 # last n layers
 is_hierarchical_linear_lr = True
 is_fgm = True
 is_lookahead = True
 is_prompt = True
-is_attention = True
+is_attention = False
 
 # tag2index
 tag2index = {
@@ -146,11 +145,17 @@ class Bert_BiLSTM_CRF(nn.Module):
         super(Bert_BiLSTM_CRF, self).__init__()
         self.tagset_size = len(tag2index)
         self.bert = AutoModel.from_pretrained(model_path, output_hidden_states = True)
-        self.bert_dense = nn.Linear(in_features=hidden_size*bert_layers, out_features=hidden_size)
+        self.bert_dense = nn.Sequential(
+            nn.Linear(in_features=hidden_size*bert_layers, out_features=hidden_size),
+            nn.ReLU()
+        )
         self.lstm = nn.LSTM(input_size=hidden_size, hidden_size=hidden_size_lstm, num_layers=1, batch_first=True, bidirectional=True)
         self.hidden = None
-        self.dropout = nn.Dropout(p=0.1)
-        self.lstm_dense = nn.Linear(in_features=hidden_size_lstm*2, out_features=self.tagset_size)
+        self.lstm_dense = nn.Sequential(
+            nn.Linear(in_features=hidden_size_lstm*2, out_features=self.tagset_size),
+            nn.ReLU(),
+            nn.Dropout(p=hidden_dropout_prob)
+        )
         self.self_attention = SelfAttention(num_attention_heads, hidden_size_lstm*2, hidden_size_attention, hidden_dropout_prob)
         self.self_attention_dense = nn.Linear(in_features=hidden_size_attention, out_features=self.tagset_size)
         self.crf = CRF(num_tags=self.tagset_size, batch_first=True)
@@ -174,12 +179,12 @@ class Bert_BiLSTM_CRF(nn.Module):
         self.hidden = (torch.randn(2, bert_out.size(0), hidden_size_lstm).to(device),
                        torch.randn(2, bert_out.size(0), hidden_size_lstm).to(device))
         out, self.hidden = self.lstm(bert_out, self.hidden)
+        feats = self.lstm_dense(out)
         # Self-attention
         if is_attention:
-            feats = self.self_attention(out)
-            feats = self.self_attention_dense(feats)
-        else:
-            feats = self.lstm_dense(out)
+            attention_feats = self.self_attention(out)
+            attention_feats = self.self_attention_dense(attention_feats)
+            feats += attention_feats
         feats = feats.permute(1, 0, 2)
         masks = masks.clone().detach().bool()
         # 计算损失值和预测值
